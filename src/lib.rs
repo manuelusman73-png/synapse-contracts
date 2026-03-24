@@ -96,6 +96,7 @@ impl SynapseContract {
         asset_code: SorobanString,
     ) -> SorobanString {
         require_relayer(&env, &caller);
+        if anchor_transaction_id.len() == 0 { panic!("anchor_transaction_id must not be empty"); }
         assets::require_allowed(&env, &asset_code);
 
         if let Some(existing) = deposits::find_by_anchor_id(&env, &anchor_transaction_id) {
@@ -294,5 +295,20 @@ mod tests {
         // Set to 5000
         client.set_max_deposit(&admin, &5000i128);
         assert_eq!(client.get_max_deposit(), 5000i128);
+    }
+
+
+    #[test]
+    #[should_panic(expected = "anchor_transaction_id must not be empty")]
+    fn test_register_deposit_panics_on_empty_anchor_id() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        let client = SynapseContractClient::new(&env, &contract_id);
+        let relayer = Address::generate(&env);
+        let stellar = Address::generate(&env);
+        let asset = SorobanString::from_str(&env, "USD");
+        client.grant_relayer(&admin, &relayer);
+        client.add_asset(&admin, &asset);
+        client.register_deposit(&relayer, &SorobanString::from_str(&env, ""), &stellar, &1i128, &asset);
     }
 }
