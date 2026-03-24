@@ -153,7 +153,6 @@ impl SynapseContract {
     // TODO(#35): write settlement_id back onto each Transaction
     // TODO(#36): verify total_amount matches sum of tx amounts on-chain
     // TODO(#37): verify period_start <= period_end
-    // TODO(#38): bump Settlement TTL after save
     // TODO(#39): emit per-tx `Settled` event in addition to batch event
     pub fn finalize_settlement(
         env: Env,
@@ -168,6 +167,7 @@ impl SynapseContract {
         let s = Settlement::new(&env, asset_code.clone(), tx_ids, total_amount, period_start, period_end);
         let id = s.id.clone();
         settlements::save(&env, &s);
+        settlements::extend_ttl(&env, &id);
         emit(&env, Event::SettlementFinalized(id.clone(), asset_code, total_amount));
         id
     }
