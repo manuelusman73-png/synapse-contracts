@@ -149,8 +149,106 @@ fn register_deposit_rejects_non_relayer() {
 }
 
 // TODO(#15): test minimum amount enforcement once implemented
-// TODO(#16): test maximum amount enforcement once implemented
 // TODO(#17): test empty anchor_transaction_id rejection once implemented
+
+// ---------------------------------------------------------------------------
+// Max deposit — issue #16
+// ---------------------------------------------------------------------------
+
+#[test]
+fn get_max_deposit_returns_none_before_set() {
+    let env = Env::default();
+    let (_, client) = setup(&env);
+    assert!(client.get_max_deposit().is_none());
+}
+
+#[test]
+fn set_and_get_max_deposit() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    client.set_max_deposit(&admin, &500_000_000);
+    assert_eq!(client.get_max_deposit(), Some(500_000_000));
+}
+
+#[test]
+#[should_panic]
+fn non_admin_cannot_set_max_deposit() {
+    let env = Env::default();
+    let (_, client) = setup(&env);
+    let rando = Address::generate(&env);
+    client.set_max_deposit(&rando, &500_000_000);
+}
+
+#[test]
+#[should_panic]
+fn set_max_deposit_rejects_zero() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    client.set_max_deposit(&admin, &0);
+}
+
+#[test]
+#[should_panic]
+fn set_max_deposit_rejects_negative() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    client.set_max_deposit(&admin, &-1);
+}
+
+#[test]
+fn deposit_below_max_succeeds() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    let relayer = Address::generate(&env);
+    client.grant_relayer(&admin, &relayer);
+    client.add_asset(&admin, &usd(&env));
+    client.set_max_deposit(&admin, &500_000_000);
+    let tx_id = client.register_deposit(&relayer, &SorobanString::from_str(&env, "a-max-1"),
+        &Address::generate(&env), &499_999_999, &usd(&env));
+    let tx = client.get_transaction(&tx_id);
+    assert_eq!(tx.amount, 499_999_999);
+}
+
+#[test]
+fn deposit_at_max_succeeds() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    let relayer = Address::generate(&env);
+    client.grant_relayer(&admin, &relayer);
+    client.add_asset(&admin, &usd(&env));
+    client.set_max_deposit(&admin, &500_000_000);
+    let tx_id = client.register_deposit(&relayer, &SorobanString::from_str(&env, "a-max-2"),
+        &Address::generate(&env), &500_000_000, &usd(&env));
+    let tx = client.get_transaction(&tx_id);
+    assert_eq!(tx.amount, 500_000_000);
+}
+
+#[test]
+#[should_panic(expected = "amount exceeds max deposit")]
+fn deposit_above_max_panics() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    let relayer = Address::generate(&env);
+    client.grant_relayer(&admin, &relayer);
+    client.add_asset(&admin, &usd(&env));
+    client.set_max_deposit(&admin, &500_000_000);
+    client.register_deposit(&relayer, &SorobanString::from_str(&env, "a-max-3"),
+        &Address::generate(&env), &500_000_001, &usd(&env));
+}
+
+#[test]
+fn deposit_succeeds_when_no_max_set() {
+    let env = Env::default();
+    let (admin, client) = setup(&env);
+    let relayer = Address::generate(&env);
+    client.grant_relayer(&admin, &relayer);
+    client.add_asset(&admin, &usd(&env));
+    // no set_max_deposit call — should pass any amount
+    let tx_id = client.register_deposit(&relayer, &SorobanString::from_str(&env, "a-max-4"),
+        &Address::generate(&env), &999_999_999_999, &usd(&env));
+    let tx = client.get_transaction(&tx_id);
+    assert_eq!(tx.amount, 999_999_999_999);
+}
 
 // ---------------------------------------------------------------------------
 // Transaction lifecycle — TODO(#23)–(#28)
