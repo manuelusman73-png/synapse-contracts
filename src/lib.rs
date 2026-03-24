@@ -85,7 +85,6 @@ impl SynapseContract {
     // TODO(#18): add `memo` field support (mirrors synapse-core CallbackPayload)
     // TODO(#19): add `memo_type` field support (text | hash | id)
     // TODO(#20): add `callback_type` field (deposit | withdrawal)
-    // TODO(#21): bump persistent TTL on AnchorIdx entry after save
     pub fn register_deposit(
         env: Env,
         caller: Address,
@@ -209,8 +208,12 @@ impl SynapseContract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::storage::MAX_ASSETS;
-    use soroban_sdk::{testutils::{Address as _, Events as _}, vec, Env, IntoVal, String as SorobanString, symbol_short};
+    use crate::storage::{StorageKey, MAX_ASSETS};
+    use soroban_sdk::{
+        testutils::{storage::Persistent, Address as _, Events as _},
+        vec,
+        Env, IntoVal, String as SorobanString, symbol_short,
+    };
 
     const TEST_ASSET_CODES: [&str; MAX_ASSETS as usize] = [
         "A00", "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12",
@@ -257,6 +260,39 @@ mod tests {
         // Unpause the contract
         client.unpause(&admin);
         assert!(!client.is_paused());
+    }
+
+    #[test]
+    fn test_register_deposit_extends_anchor_idx_ttl() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        let client = SynapseContractClient::new(&env, &contract_id);
+        let relayer = Address::generate(&env);
+        let stellar = Address::generate(&env);
+        let anchor_id = SorobanString::from_str(&env, "anchor-tx-ttl-1");
+        let asset = SorobanString::from_str(&env, "USD");
+
+        client.grant_relayer(&admin, &relayer);
+        client.add_asset(&admin, &asset);
+
+        let tx_id = client.register_deposit(
+            &relayer,
+            &anchor_id,
+            &stellar,
+            &100i128,
+            &asset,
+        );
+
+        let anchor_key = StorageKey::AnchorIdx(anchor_id);
+        let tx_key = StorageKey::Tx(tx_id);
+        let (ttl_anchor, ttl_tx) = env.as_contract(&contract_id, || {
+            let p = env.storage().persistent();
+            (p.get_ttl(&anchor_key), p.get_ttl(&tx_key))
+        });
+        assert_eq!(
+            ttl_anchor, ttl_tx,
+            "AnchorIdx TTL should match Tx after register_deposit (both extended)"
+        );
     }
 
     #[test]

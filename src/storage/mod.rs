@@ -110,7 +110,11 @@ pub mod deposits {
         env.storage().persistent().get(&StorageKey::Tx(id.clone())).expect("tx not found")
     }
     pub fn index_anchor_id(env: &Env, anchor_id: &SorobanString, tx_id: &SorobanString) {
-        env.storage().persistent().set(&StorageKey::AnchorIdx(anchor_id.clone()), tx_id);
+        let key = StorageKey::AnchorIdx(anchor_id.clone());
+        env.storage().persistent().set(&key, tx_id);
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, TX_TTL_THRESHOLD, TX_TTL_EXTEND_TO);
     }
     pub fn find_by_anchor_id(env: &Env, anchor_id: &SorobanString) -> Option<SorobanString> {
         env.storage().persistent().get(&StorageKey::AnchorIdx(anchor_id.clone()))
