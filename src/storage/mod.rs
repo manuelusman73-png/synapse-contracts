@@ -8,12 +8,16 @@ use crate::types::{DlqEntry, Settlement, Transaction};
 const TX_TTL_THRESHOLD: u32 = 17_280;
 const TX_TTL_EXTEND_TO: u32 = 172_800;
 
+/// Upper bound on allowlisted assets (instance storage keys per asset).
+pub const MAX_ASSETS: u32 = 20;
+
 #[contracttype]
 pub enum StorageKey {
     Admin,
     Paused,
     MinDeposit,
     MaxDeposit,
+    AssetCount,
     Relayer(Address),
     Asset(SorobanString),
     Tx(SorobanString),
@@ -58,11 +62,34 @@ pub mod relayers {
 
 pub mod assets {
     use super::*;
+
+    pub fn count(env: &Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&StorageKey::AssetCount)
+            .unwrap_or(0u32)
+    }
+
+    fn set_count(env: &Env, n: u32) {
+        env.storage().instance().set(&StorageKey::AssetCount, &n);
+    }
+
     pub fn add(env: &Env, code: &SorobanString) {
+        if is_allowed(env, code) {
+            return;
+        }
+        if count(env) >= MAX_ASSETS {
+            panic!("max assets reached")
+        }
         env.storage().instance().set(&StorageKey::Asset(code.clone()), &true);
+        set_count(env, count(env) + 1);
     }
     pub fn remove(env: &Env, code: &SorobanString) {
+        if !is_allowed(env, code) {
+            return;
+        }
         env.storage().instance().remove(&StorageKey::Asset(code.clone()));
+        set_count(env, count(env).saturating_sub(1));
     }
     pub fn is_allowed(env: &Env, code: &SorobanString) -> bool {
         env.storage().instance().has(&StorageKey::Asset(code.clone()))

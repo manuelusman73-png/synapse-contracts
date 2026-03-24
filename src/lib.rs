@@ -66,7 +66,6 @@ impl SynapseContract {
     }
 
     // TODO(#12): validate asset_code is non-empty and uppercase-alphanumeric only
-    // TODO(#13): cap the total number of allowed assets to bound instance storage
     pub fn add_asset(env: Env, caller: Address, asset_code: SorobanString) {
         require_admin(&env, &caller);
         assets::add(&env, &asset_code);
@@ -210,7 +209,13 @@ impl SynapseContract {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::storage::MAX_ASSETS;
     use soroban_sdk::{testutils::{Address as _, Events as _}, vec, Env, IntoVal, String as SorobanString, symbol_short};
+
+    const TEST_ASSET_CODES: [&str; MAX_ASSETS as usize] = [
+        "A00", "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12",
+        "A13", "A14", "A15", "A16", "A17", "A18", "A19",
+    ];
 
     fn setup(env: &Env) -> (Address, Address) {
         env.mock_all_auths();
@@ -252,6 +257,35 @@ mod tests {
         // Unpause the contract
         client.unpause(&admin);
         assert!(!client.is_paused());
+    }
+
+    #[test]
+    fn test_add_asset_respects_max_assets_cap() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        let client = SynapseContractClient::new(&env, &contract_id);
+
+        for code in TEST_ASSET_CODES {
+            client.add_asset(&admin, &SorobanString::from_str(&env, code));
+        }
+        let n = env.as_contract(&contract_id, || crate::storage::assets::count(&env));
+        assert_eq!(n, MAX_ASSETS);
+    }
+
+    #[test]
+    #[should_panic(expected = "max assets reached")]
+    fn test_add_asset_panics_when_cap_exceeded() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        let client = SynapseContractClient::new(&env, &contract_id);
+
+        for code in TEST_ASSET_CODES {
+            client.add_asset(&admin, &SorobanString::from_str(&env, code));
+        }
+        client.add_asset(
+            &admin,
+            &SorobanString::from_str(&env, "OVERFLOW"),
+        );
     }
 
     #[test]
