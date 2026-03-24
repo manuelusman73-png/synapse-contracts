@@ -249,6 +249,14 @@ mod tests {
         assert_eq!(tx.relayer, relayer);
     }
 
+    #[test]
+    fn test_register_deposit_initializes_memo_to_none() {
+        let env = Env::default();
+        let (client, _, tx_id) = setup_relayer_deposit(&env, "memo-on-tx");
+        let tx = client.get_transaction(&tx_id);
+        assert!(tx.memo.is_none());
+    }
+
     fn setup_relayer_deposit<'a>(
         env: &'a Env,
         anchor_label: &str,

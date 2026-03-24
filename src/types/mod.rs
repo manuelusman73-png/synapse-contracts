@@ -1,7 +1,5 @@
 use soroban_sdk::{contracttype, Address, Env, String as SorobanString, Vec};
 extern crate alloc;
-use alloc::format;
-
 // TODO(#45): replace generate_id with hash(anchor_transaction_id) for determinism
 // TODO(#46): add `Cancelled` status for user-initiated cancellations
 // TODO(#47): add `memo: Option<SorobanString>` field to Transaction
@@ -30,6 +28,7 @@ pub struct Transaction {
     pub created_ledger: u32,
     pub updated_ledger: u32,
     pub settlement_id: SorobanString, // empty = unsettled
+    pub memo: Option<SorobanString>,
 }
 
 impl Transaction {
@@ -53,6 +52,7 @@ impl Transaction {
             created_ledger: ledger,
             updated_ledger: ledger,
             settlement_id: SorobanString::from_str(env, ""),
+            memo: None,
         }
     }
 }
