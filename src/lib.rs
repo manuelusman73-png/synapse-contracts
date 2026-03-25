@@ -136,6 +136,9 @@ impl SynapseContract {
     // TODO(#28): validate error_reason is non-empty
     pub fn mark_failed(env: Env, caller: Address, tx_id: SorobanString, error_reason: SorobanString) {
         require_relayer(&env, &caller);
+        if error_reason.is_empty() {
+            panic!("error_reason must not be empty");
+        }
         let mut tx = deposits::get(&env, &tx_id);
         tx.status = TransactionStatus::Failed;
         tx.updated_ledger = env.ledger().sequence();
@@ -491,6 +494,9 @@ impl SynapseContract {
         error_reason: SorobanString,
     ) {
         require_relayer(&env, &caller);
+        if error_reason.is_empty() {
+            panic!("error_reason must not be empty");
+        }
         let mut tx = deposits::get(&env, &tx_id);
         tx.status = TransactionStatus::Failed;
         tx.updated_ledger = env.ledger().sequence();
@@ -750,6 +756,14 @@ mod tests {
         let err = SorobanString::from_str(&env, "first");
         client.mark_failed(&relayer, &tx_id, &err);
         client.mark_failed(&relayer, &tx_id, &SorobanString::from_str(&env, "second"));
+    }
+
+    #[test]
+    #[should_panic(expected = "error_reason must not be empty")]
+    fn test_mark_failed_panics_when_error_reason_empty() {
+        let env = Env::default();
+        let (client, relayer, tx_id) = setup_relayer_deposit(&env, "mf-empty-reason");
+        client.mark_failed(&relayer, &tx_id, &SorobanString::from_str(&env, ""));
     }
 
     #[test]
