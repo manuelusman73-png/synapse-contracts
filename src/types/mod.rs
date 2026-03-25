@@ -127,16 +127,12 @@ impl DlqEntry {
 pub enum Event {
     Initialized(Address),                                    // (admin)
     DepositRegistered(SorobanString, SorobanString),         // (tx_id, anchor_id)
-    StatusUpdated(SorobanString, TransactionStatus),         // (tx_id, new_status)
-    MovedToDlq(SorobanString, SorobanString),                // (tx_id, error_reason)
-    DepositRegistered(SorobanString, SorobanString), // (tx_id, anchor_id)
-    StatusUpdated(SorobanString, TransactionStatus),  // (tx_id, new_status)
-    MovedToDlq(SorobanString, SorobanString),         // (tx_id, error_reason)
-    DlqRetried(SorobanString),                        // (tx_id)
-    SettlementFinalized(SorobanString, SorobanString, i128), // (settlement_id, asset_code, total)
+    StatusUpdated(SorobanString, TransactionStatus, TransactionStatus), // (tx_id, old_status, new_status)
+    MovedToDlq(SorobanString, SorobanString),                           // (tx_id, error_reason)
+    DlqRetried(SorobanString),                                          // (tx_id)
+    SettlementFinalized(SorobanString, SorobanString, i128),            // (settlement_id, asset_code, total)
     AssetAdded(SorobanString),
     AssetRemoved(SorobanString),
-    DlqRetried(SorobanString),
     MaxRetriesExceeded(SorobanString),
 }
 
