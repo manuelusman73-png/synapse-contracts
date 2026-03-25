@@ -1,16 +1,14 @@
-# TODOs for feature/issue-60-dlq-count
+# Feature/issue-62-extend-ttl Progress
 
-## Remaining Steps:
-1. [x] Edit src/storage/mod.rs: Add DlqCount to StorageKey, increment in push, decrement in remove, add get_count fn
-2. [x] Edit src/lib.rs: Call dlq::remove in retry_dlq, add get_dlq_count query
- 3. [x] git add ., git commit -m "Add DlqCount key to track total DLQ entries without scanning (#60)"
- 4. [x] git push origin feature/issue-60-dlq-count
- 5. [x] gh pr create --title "Add DlqCount key (#60)" --body "Add DlqCount to track total DLQ entries without scanning
+## Remaining Steps
+- [x] 1. Add TTL helper functions (extend_persistent_ttl, extend_instance_ttl) to src/storage/mod.rs
+- [x] 2. Update all target get functions to call extend_ttl after read
+- [x] 3. Remove TODO(#58) and settlements::extend_ttl hardcoded function
+- [ ] 4. Add test functions for TTL extension in tests/contract_test.rs
+- [ ] 5. Run `cargo test` to generate snapshots and verify
+- [ ] 6. Commit changes and open PR to develop
+- [ ] 4. Add test functions for TTL extension in tests/contract_test.rs
+- [ ] 5. Run `cargo test` to generate snapshots and verify
+- [ ] 6. Commit changes and open PR to develop
 
-Closes #60 #64
-
-Increment counter on dlq::push.
-Decrement on dlq::remove (called in retry_dlq).
-Expose via get_dlq_count query." --base develop
-
-Updated after each step.
+Updated as steps complete.

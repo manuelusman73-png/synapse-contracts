@@ -1,12 +1,19 @@
 use crate::types::{DlqEntry, Settlement, Transaction};
 use soroban_sdk::{contracttype, Address, Env, String as SorobanString};
 
-// TODO(#58): bump TTL on every persistent read (extend_ttl) to prevent state expiry
 // TODO(#59): use temporary() storage for in-flight idempotency locks
 // TODO(#60): add DlqCount key to track total DLQ entries without scanning
 
 const TX_TTL_THRESHOLD: u32 = 17_280;
 const TX_TTL_EXTEND_TO: u32 = 172_800;
+
+pub fn extend_persistent_ttl(env: &Env, key: &StorageKey) {
+    env.storage().persistent().extend_ttl(key, TX_TTL_THRESHOLD as u32, TX_TTL_EXTEND_TO as u32);
+}
+
+pub fn extend_instance_ttl(env: &Env) {
+    env.storage().instance().extend_ttl(TX_TTL_THRESHOLD as u32, TX_TTL_EXTEND_TO as u32);
+}
 
 #[contracttype]
 pub enum StorageKey {
@@ -28,12 +35,14 @@ pub mod admin {
     pub fn set(env: &Env, admin: &Address) {
         env.storage().instance().set(&StorageKey::Admin, admin);
     }
-    pub fn get(env: &Env) -> Address {
-        env.storage()
-            .instance()
-            .get(&StorageKey::Admin)
-            .expect("not initialised")
-    }
+pub fn get(env: &Env) -> Address {
+    let admin = env.storage()
+        .instance()
+        .get(&StorageKey::Admin)
+        .expect("not initialised");
+    extend_instance_ttl(env);
+    admin
+}
 }
 
 pub mod pause {
@@ -106,9 +115,14 @@ pub mod max_deposit {
         env.storage().instance().set(&StorageKey::MaxDeposit, &amount);
     }
 
-    pub fn get(env: &Env) -> Option<i128> {
-        env.storage().instance().get(&StorageKey::MaxDeposit)
+pub fn get(env: &Env) -> Option<i128> {
+    let value = env.storage().instance().get(&StorageKey::MaxDeposit);
+    extend_instance_ttl(env);
+    if value.is_some() {
+        // Key-specific extension not possible for instance(), but general TTL bumped
     }
+    value
+}
 }
 
 pub mod deposits {
@@ -120,12 +134,15 @@ pub mod deposits {
             .persistent()
             .extend_ttl(&key, TX_TTL_THRESHOLD, TX_TTL_EXTEND_TO);
     }
-    pub fn get(env: &Env, id: &SorobanString) -> Transaction {
-        env.storage()
-            .persistent()
-            .get(&StorageKey::Tx(id.clone()))
-            .expect("tx not found")
-    }
+pub fn get(env: &Env, id: &SorobanString) -> Transaction {
+    let tx_key = StorageKey::Tx(id.clone());
+    let tx = env.storage()
+        .persistent()
+        .get(&tx_key)
+        .expect("tx not found");
+    extend_persistent_ttl(env, &tx_key);
+    tx
+}
     pub fn index_anchor_id(env: &Env, anchor_id: &SorobanString, tx_id: &SorobanString) {
         env.storage()
             .persistent()
@@ -145,15 +162,16 @@ pub mod settlements {
             .persistent()
             .set(&StorageKey::Settlement(s.id.clone()), s);
     }
-    pub fn get(env: &Env, id: &SorobanString) -> Settlement {
-        env.storage()
-            .persistent()
-            .get(&StorageKey::Settlement(id.clone()))
-            .expect("settlement not found")
-    }
-    pub fn extend_ttl(env: &Env, id: &SorobanString) {
-        env.storage().persistent().extend_ttl(&StorageKey::Settlement(id.clone()), 535679, 535679);
-    }
+pub fn get(env: &Env, id: &SorobanString) -> Settlement {
+    let settlement_key = StorageKey::Settlement(id.clone());
+    let settlement = env.storage()
+        .persistent()
+        .get(&settlement_key)
+        .expect("settlement not found");
+    extend_persistent_ttl(env, &settlement_key);
+    settlement
+}
+
 }
 
 
@@ -168,11 +186,16 @@ pub mod dlq {
             .persistent()
             .set(&StorageKey::Dlq(entry.tx_id.clone()), entry);
     }
-    pub fn get(env: &Env, tx_id: &SorobanString) -> Option<DlqEntry> {
-        env.storage()
-            .persistent()
-            .get(&StorageKey::Dlq(tx_id.clone()))
+pub fn get(env: &Env, tx_id: &SorobanString) -> Option<DlqEntry> {
+    let dlq_key = StorageKey::Dlq(tx_id.clone());
+    let value = env.storage()
+        .persistent()
+        .get(&dlq_key);
+    if let Some(_) = value.as_ref() {
+        extend_persistent_ttl(env, &dlq_key);
     }
+    value
+}
     pub fn remove(env: &Env, tx_id: &SorobanString) {
         let mut count: i128 = env.storage().persistent().get(&StorageKey::DlqCount(0i128)).unwrap_or(0i128);
         count = count.saturating_sub(1);
@@ -181,7 +204,10 @@ pub mod dlq {
             .persistent()
             .remove(&StorageKey::Dlq(tx_id.clone()));
     }
-    pub fn get_count(env: &Env) -> i128 {
-        env.storage().persistent().get(&StorageKey::DlqCount(0i128)).unwrap_or(0i128)
-    }
+pub fn get_count(env: &Env) -> i128 {
+    let count_key = StorageKey::DlqCount(0i128);
+    let count = env.storage().persistent().get(&count_key).unwrap_or(0i128);
+    extend_persistent_ttl(env, &count_key);
+    count
+}
 }
