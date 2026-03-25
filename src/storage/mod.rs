@@ -85,6 +85,13 @@ pub mod assets {
         env.storage()
             .instance()
             .remove(&StorageKey::Asset(code.clone()));
+        set_count(env, count(env).saturating_sub(1));
+        env.storage().instance().set(&StorageKey::Asset(code.clone()), &true);
+    }
+    pub fn remove(env: &Env, code: &SorobanString) {
+        env.storage()
+            .instance()
+            .remove(&StorageKey::Asset(code.clone()));
     }
     pub fn is_allowed(env: &Env, code: &SorobanString) -> bool {
         env.storage()
@@ -126,7 +133,9 @@ pub mod deposits {
             .expect("tx not found")
     }
     pub fn index_anchor_id(env: &Env, anchor_id: &SorobanString, tx_id: &SorobanString) {
-        env.storage().persistent().set(&StorageKey::AnchorIdx(anchor_id.clone()), tx_id);
+        env.storage()
+            .persistent()
+            .set(&StorageKey::AnchorIdx(anchor_id.clone()), tx_id);
     }
     pub fn find_by_anchor_id(env: &Env, anchor_id: &SorobanString) -> Option<SorobanString> {
         env.storage()
@@ -147,6 +156,19 @@ pub mod settlements {
             .persistent()
             .get(&StorageKey::Settlement(id.clone()))
             .expect("settlement not found")
+    }
+    pub fn extend_ttl(env: &Env, id: &SorobanString) {
+        env.storage().persistent().extend_ttl(&StorageKey::Settlement(id.clone()), 535679, 535679);
+    }
+}
+
+pub mod max_deposit {
+    use super::*;
+    pub fn set(env: &Env, amount: i128) {
+        env.storage().instance().set(&StorageKey::MaxDeposit, &amount);
+    }
+    pub fn get(env: &Env) -> Option<i128> {
+        env.storage().instance().get(&StorageKey::MaxDeposit)
     }
 }
 

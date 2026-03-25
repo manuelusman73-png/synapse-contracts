@@ -1,11 +1,13 @@
 #![no_std]
 
+extern crate alloc;
+
 mod access;
 mod events;
 mod storage;
-mod types;
+pub mod types;
 
-use access::{require_admin, require_relayer};
+use access::{require_admin, require_not_paused, require_relayer};
 use events::emit;
 use soroban_sdk::{contract, contractimpl, Address, Env, String as SorobanString, Vec};
 use storage::{assets, deposits, dlq, max_deposit, relayers, settlements};
@@ -16,8 +18,11 @@ pub struct SynapseContract;
 
 #[contractimpl]
 impl SynapseContract {
-    // TODO(#1): prevent re-initialisation — panic if admin already set
+    // TODO(#2): emit `Initialized` event on first call
     pub fn initialize(env: Env, admin: Address) {
+        if env.storage().instance().has(&storage::StorageKey::Admin) {
+            panic!("already initialised");
+        }
         admin.require_auth();
         storage::admin::set(&env, &admin);
         emit(&env, Event::Initialized(admin));
@@ -25,6 +30,7 @@ impl SynapseContract {
 
     // TODO(#3): emit `RelayerGranted` event
     pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
+        require_not_paused(&env);
         // Reject the all-zeros Stellar account (GAAAAAA...AWHF) as an invalid address.
         // This is the canonical "zero address" on Stellar — 32 zero bytes encoded as a G-address.
         let zero_addr = Address::from_string(&SorobanString::from_str(
@@ -36,20 +42,24 @@ impl SynapseContract {
         }
         require_admin(&env, &caller);
         relayers::add(&env, &relayer);
+        emit(&env, Event::RelayerGranted(relayer));
     }
 
-    // TODO(#5): emit `RelayerRevoked` event
+    // TODO(#6): panic if revoking a non-existent relayer
     pub fn revoke_relayer(env: Env, caller: Address, relayer: Address) {
+        require_not_paused(&env);
         require_admin(&env, &caller);
         if !relayers::has(&env, &relayer) {
             panic!("address is not a relayer")
         }
         relayers::remove(&env, &relayer);
+        emit(&env, Event::RelayerRevoked(relayer));
     }
 
     // TODO(#7): emit `AdminTransferred` event
     // TODO(#8): two-step admin transfer (propose + accept) to prevent lockout
     pub fn transfer_admin(env: Env, caller: Address, new_admin: Address) {
+        require_not_paused(&env);
         require_admin(&env, &caller);
         storage::admin::set(&env, &new_admin);
     }
@@ -70,6 +80,7 @@ impl SynapseContract {
     // TODO(#12): validate asset_code is non-empty and uppercase-alphanumeric only
     // TODO(#13): cap the total number of allowed assets to bound instance storage
     pub fn add_asset(env: Env, caller: Address, asset_code: SorobanString) {
+        require_not_paused(&env);
         require_admin(&env, &caller);
         assets::add(&env, &asset_code);
         emit(&env, Event::AssetAdded(asset_code));
@@ -77,13 +88,24 @@ impl SynapseContract {
 
     // TODO(#14): panic if asset_code is not currently in the allowlist
     pub fn remove_asset(env: Env, caller: Address, asset_code: SorobanString) {
+        require_not_paused(&env);
         require_admin(&env, &caller);
         assets::remove(&env, &asset_code);
         emit(&env, Event::AssetRemoved(asset_code));
     }
 
+    pub fn set_max_deposit(env: Env, caller: Address, amount: i128) {
+        require_admin(&env, &caller);
+        if amount <= 0 { panic!("max deposit must be positive") }
+        max_deposit::set(&env, amount);
+    }
+
+    pub fn get_max_deposit(env: Env) -> Option<i128> {
+        max_deposit::get(&env)
+    }
+
     // TODO(#15): enforce minimum deposit amount (configurable by admin)
-    // TODO(#16): enforce maximum deposit amount (configurable by admin)
+    // TODO(#16): enforce maximum deposit amount (configurable by admin) — DONE
     // TODO(#17): validate anchor_transaction_id is non-empty
     // TODO(#18): add `memo` field support (mirrors synapse-core CallbackPayload)
     // TODO(#19): add `memo_type` field support (text | hash | id)
@@ -98,8 +120,13 @@ impl SynapseContract {
         asset_code: SorobanString,
         memo: Option<SorobanString>,
     ) -> SorobanString {
+        require_not_paused(&env);
         require_relayer(&env, &caller);
         assets::require_allowed(&env, &asset_code);
+
+        if let Some(max) = max_deposit::get(&env) {
+            if amount > max { panic!("amount exceeds max deposit") }
+        }
 
         if let Some(existing) = deposits::find_by_anchor_id(&env, &anchor_transaction_id) {
             return existing;
@@ -125,6 +152,7 @@ impl SynapseContract {
 
     // TODO(#23): enforce transition guard — must be Pending
     pub fn mark_processing(env: Env, caller: Address, tx_id: SorobanString) {
+        require_not_paused(&env);
         require_relayer(&env, &caller);
         let mut tx = deposits::get(&env, &tx_id);
         tx.status = TransactionStatus::Processing;
@@ -138,6 +166,7 @@ impl SynapseContract {
 
     // TODO(#25): enforce transition guard — must be Processing
     pub fn mark_completed(env: Env, caller: Address, tx_id: SorobanString) {
+        require_not_paused(&env);
         require_relayer(&env, &caller);
         let mut tx = deposits::get(&env, &tx_id);
         tx.status = TransactionStatus::Completed;
@@ -152,12 +181,8 @@ impl SynapseContract {
     // TODO(#26): enforce transition guard — must be Pending or Processing
     // TODO(#27): cap max retry_count; emit `MaxRetriesExceeded` when hit
     // TODO(#28): validate error_reason is non-empty
-    pub fn mark_failed(
-        env: Env,
-        caller: Address,
-        tx_id: SorobanString,
-        error_reason: SorobanString,
-    ) {
+    pub fn mark_failed(env: Env, caller: Address, tx_id: SorobanString, error_reason: SorobanString) {
+        require_not_paused(&env);
         require_relayer(&env, &caller);
         let mut tx = deposits::get(&env, &tx_id);
         tx.status = TransactionStatus::Failed;
@@ -168,11 +193,10 @@ impl SynapseContract {
         emit(&env, Event::MovedToDlq(tx_id, error_reason));
     }
 
-    // TODO(#29): implement — reset tx status to Pending, increment retry_count
-    // TODO(#30): remove DLQ entry after successful retry
+    // TODO(#29): increment retry_count on DlqEntry
     // TODO(#31): emit `DlqRetried` event
-    // TODO(#32): only admin OR original relayer should be able to retry
     pub fn retry_dlq(env: Env, caller: Address, tx_id: SorobanString) {
+        require_not_paused(&env);
         require_admin(&env, &caller);
 
         let mut entry = dlq::get(&env, &tx_id).expect("dlq entry not found");
@@ -193,7 +217,6 @@ impl SynapseContract {
     // TODO(#35): write settlement_id back onto each Transaction
     // TODO(#36): verify total_amount matches sum of tx amounts on-chain
     // TODO(#37): verify period_start <= period_end
-    // TODO(#38): bump Settlement TTL after save
     // TODO(#39): emit per-tx `Settled` event in addition to batch event
     pub fn finalize_settlement(
         env: Env,
@@ -204,6 +227,7 @@ impl SynapseContract {
         period_start: u64,
         period_end: u64,
     ) -> SorobanString {
+        require_not_paused(&env);
         require_relayer(&env, &caller);
         if period_start > period_end {
             panic!("period_start must be <= period_end")
@@ -238,7 +262,7 @@ impl SynapseContract {
     // TODO(#40): add `get_dlq_entry(tx_id)` query
     // TODO(#41): add `get_admin()` query
     // TODO(#43): add `get_min_deposit()` query
-    // TODO(#44): add `get_max_deposit()` query
+    // TODO(#44): add `get_max_deposit()` query — DONE
 
     pub fn get_admin(env: Env) -> Address {
         storage::admin::get(&env)
