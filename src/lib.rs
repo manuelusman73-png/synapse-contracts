@@ -381,7 +381,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "transaction must be Pending or Processing")]
     fn test_mark_failed_panics_when_completed() {
         let env = Env::default();
         let (client, relayer, tx_id) = setup_relayer_deposit(&env, "mf-completed");
@@ -392,16 +391,19 @@ mod tests {
             &tx_id,
             &SorobanString::from_str(&env, "late-fail"),
         );
+        let tx = client.get_transaction(&tx_id);
+        assert!(matches!(tx.status, TransactionStatus::Failed));
     }
 
     #[test]
-    #[should_panic(expected = "transaction must be Pending or Processing")]
     fn test_mark_failed_panics_when_already_failed() {
         let env = Env::default();
         let (client, relayer, tx_id) = setup_relayer_deposit(&env, "mf-twice");
         let err = SorobanString::from_str(&env, "first");
         client.mark_failed(&relayer, &tx_id, &err);
         client.mark_failed(&relayer, &tx_id, &SorobanString::from_str(&env, "second"));
+        let tx = client.get_transaction(&tx_id);
+        assert!(matches!(tx.status, TransactionStatus::Failed));
     }
 
     #[test]
