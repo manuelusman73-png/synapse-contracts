@@ -80,7 +80,7 @@ pub mod max_deposit {
     }
 
     pub fn get(env: &Env) -> i128 {
-        env.storage().instance().get(&StorageKey::MaxDeposit).unwrap_or(&0i128).clone()
+        env.storage().instance().get(&StorageKey::MaxDeposit).unwrap_or(0i128)
     }
 }
 
