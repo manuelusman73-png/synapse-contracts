@@ -270,7 +270,7 @@ impl SynapseContract {
     }
 
     // TODO(#40): add `get_dlq_entry(tx_id)` query
-    // TODO(#41): add `get_admin()` query
+    // TODO(#41): add `get_admin()` query — DONE
     // TODO(#43): add `get_min_deposit()` query
     // TODO(#44): add `get_max_deposit()` query — DONE
 
