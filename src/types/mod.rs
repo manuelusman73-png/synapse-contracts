@@ -136,6 +136,7 @@ impl DlqEntry {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
     Initialized(Address),                                    // (admin)
+    RelayerGranted(Address),                                 // (relayer)
     DepositRegistered(SorobanString, SorobanString),         // (tx_id, anchor_id)
     StatusUpdated(SorobanString, TransactionStatus),         // (tx_id, new_status)
     MovedToDlq(SorobanString, SorobanString),                // (tx_id, error_reason)
