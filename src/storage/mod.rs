@@ -14,6 +14,7 @@ pub enum StorageKey {
     Paused,
     MinDeposit,
     MaxDeposit,
+    AssetCount,
     Relayer(Address),
     Asset(SorobanString),
     Tx(SorobanString),
@@ -70,13 +71,25 @@ pub mod relayers {
 
 pub mod assets {
     use super::*;
+    pub const MAX_ASSETS: u32 = 50;
+    fn count(env: &Env) -> u32 {
+        env.storage().instance().get(&StorageKey::AssetCount).unwrap_or(0u32)
+    }
+    fn set_count(env: &Env, c: u32) {
+        env.storage().instance().set(&StorageKey::AssetCount, &c);
+    }
     pub fn add(env: &Env, code: &SorobanString) {
         if is_allowed(env, code) {
             return;
         }
+        let current = count(env);
+        if current >= MAX_ASSETS {
+            panic!("max assets cap exceeded")
+        }
         env.storage()
             .instance()
             .set(&StorageKey::Asset(code.clone()), &true);
+        set_count(env, current + 1);
     }
     pub fn remove(env: &Env, code: &SorobanString) {
         if !is_allowed(env, code) {
@@ -86,12 +99,6 @@ pub mod assets {
             .instance()
             .remove(&StorageKey::Asset(code.clone()));
         set_count(env, count(env).saturating_sub(1));
-        env.storage().instance().set(&StorageKey::Asset(code.clone()), &true);
-    }
-    pub fn remove(env: &Env, code: &SorobanString) {
-        env.storage()
-            .instance()
-            .remove(&StorageKey::Asset(code.clone()));
     }
     pub fn is_allowed(env: &Env, code: &SorobanString) -> bool {
         env.storage()
@@ -105,19 +112,9 @@ pub mod assets {
     }
 }
 
-pub mod max_deposit {
-    use super::*;
-
-    pub fn set(env: &Env, amount: &i128) {
-        env.storage().instance().set(&StorageKey::MaxDeposit, amount);
-    }
-
-    pub fn get(env: &Env) -> i128 {
-        env.storage().instance().get(&StorageKey::MaxDeposit).unwrap_or(0i128)
-    }
-}
 
 pub mod deposits {
+
     use super::*;
     pub fn save(env: &Env, tx: &Transaction) {
         let key = StorageKey::Tx(tx.id.clone());

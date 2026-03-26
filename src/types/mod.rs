@@ -124,10 +124,10 @@ impl DlqEntry {
 }
 
 /// Contract events — one variant per state change.
-// TODO(#51): add `RelayerGranted(Address)` variant
-// TODO(#53): add `Initialized(Address)` variant
-// TODO(#54): add `ContractPaused` / `ContractUnpaused` variants
-// TODO(#56): add `MaxRetriesExceeded(SorobanString)` variant
+// TODO(#51): add RelayerGranted(Address) variant - pending
+// TODO(#53): add Initialized(Address) variant - pending  
+// TODO(#54): add ContractPaused / ContractUnpaused variants - pending
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
@@ -137,6 +137,7 @@ pub enum Event {
     StatusUpdated(SorobanString, TransactionStatus),         // (tx_id, new_status)
     MovedToDlq(SorobanString, SorobanString),                // (tx_id, error_reason)
     DlqRetried(SorobanString),                               // (tx_id)
+    MaxRetriesExceeded(SorobanString),
     SettlementFinalized(SorobanString, SorobanString, i128), // (settlement_id, asset_code, total)
     AssetAdded(SorobanString),
     AssetRemoved(SorobanString),

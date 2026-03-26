@@ -42,7 +42,7 @@ impl SynapseContract {
         }
         require_admin(&env, &caller);
         relayers::add(&env, &relayer);
-        emit(&env, Event::RelayerGranted(relayer));
+        emit(&env, types::Event::RelayerGranted(relayer));
     }
 
     // TODO(#6): panic if revoking a non-existent relayer
@@ -69,6 +69,7 @@ impl SynapseContract {
     pub fn pause(env: Env, caller: Address) {
         require_admin(&env, &caller);
         storage::pause::set(&env, true);
+        emit(&env, types::Event::ContractPaused);
     }
 
     // TODO(#11): emit `ContractUnpaused` event
@@ -100,9 +101,11 @@ impl SynapseContract {
         max_deposit::set(&env, amount);
     }
 
-    pub fn get_max_deposit(env: Env) -> Option<i128> {
+
+    pub fn get_max_deposit(env: Env) -> i128 {
         max_deposit::get(&env)
     }
+
 
     // TODO(#15): enforce minimum deposit amount (configurable by admin)
     // TODO(#16): enforce maximum deposit amount (configurable by admin) — DONE
