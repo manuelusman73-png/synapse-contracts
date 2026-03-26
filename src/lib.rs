@@ -211,7 +211,7 @@ impl SynapseContract {
         entry.last_retry_ledger = env.ledger().sequence();
 
         deposits::save(&env, &tx);
-        dlq::push(&env, &entry);
+        dlq::remove(&env, &tx_id);
 
         emit(&env, Event::StatusUpdated(tx_id, TransactionStatus::Pending));
     }
@@ -556,12 +556,11 @@ mod tests {
         assert!(matches!(tx_retried.status, TransactionStatus::Pending));
         assert_eq!(tx_retried.updated_ledger, 100);
         
-        // 4. Verify DLQ Entry
+        // 4. Verify DLQ Entry is removed
         let entry = env.as_contract(&client.address, || {
-            storage::dlq::get(&env, &tx_id).unwrap()
+            storage::dlq::get(&env, &tx_id)
         });
-        assert_eq!(entry.retry_count, 1);
-        assert_eq!(entry.last_retry_ledger, 100);
+        assert!(entry.is_none());
     }
 
     #[test]
