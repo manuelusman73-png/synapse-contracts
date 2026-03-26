@@ -113,6 +113,7 @@ pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
     pub fn unpause(env: Env, caller: Address) {
         require_admin(&env, &caller);
         storage::pause::set(&env, false);
+        emit(&env, Event::ContractUnpaused);
     }
 
     // TODO(#13): cap the total number of allowed assets to bound instance storage
