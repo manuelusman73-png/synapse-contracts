@@ -7,20 +7,16 @@ use soroban_sdk::{contracttype, Address, Env, String as SorobanString};
 const TX_TTL_THRESHOLD: u32 = 17_280;
 const TX_TTL_EXTEND_TO: u32 = 172_800;
 
-pub fn extend_persistent_ttl(env: &Env, key: &StorageKey) {
-    env.storage().persistent().extend_ttl(key, TX_TTL_THRESHOLD as u32, TX_TTL_EXTEND_TO as u32);
-}
-
-pub fn extend_instance_ttl(env: &Env) {
-    env.storage().instance().extend_ttl(TX_TTL_THRESHOLD as u32, TX_TTL_EXTEND_TO as u32);
-}
+pub const MAX_ASSETS: u32 = 20;
 
 #[contracttype]
 pub enum StorageKey {
     Admin,
+    PendingAdmin,
     Paused,
     MinDeposit,
     MaxDeposit,
+    AssetCount,
     Relayer(Address),
     Asset(SorobanString),
     Tx(SorobanString),
@@ -43,6 +39,19 @@ pub fn get(env: &Env) -> Address {
     extend_instance_ttl(env);
     admin
 }
+}
+
+pub mod pending_admin {
+    use super::*;
+    pub fn set(env: &Env, pending_admin: &Address) {
+        env.storage().instance().set(&StorageKey::PendingAdmin, pending_admin);
+    }
+    pub fn get(env: &Env) -> Option<Address> {
+        env.storage().instance().get(&StorageKey::PendingAdmin)
+    }
+    pub fn clear(env: &Env) {
+        env.storage().instance().remove(&StorageKey::PendingAdmin);
+    }
 }
 
 pub mod pause {
@@ -80,6 +89,19 @@ pub mod relayers {
 
 pub mod assets {
     use super::*;
+    use crate::storage::MAX_ASSETS;
+
+    fn count(env: &Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&StorageKey::AssetCount)
+            .unwrap_or(0u32)
+    }
+
+    fn set_count(env: &Env, n: u32) {
+        env.storage().instance().set(&StorageKey::AssetCount, &n);
+    }
+
     pub fn add(env: &Env, code: &SorobanString) {
         if is_allowed(env, code) {
             return;
@@ -88,19 +110,19 @@ pub mod assets {
             .instance()
             .set(&StorageKey::Asset(code.clone()), &true);
     }
+
     pub fn remove(env: &Env, code: &SorobanString) {
-        if !is_allowed(env, code) {
-            return;
-        }
         env.storage()
             .instance()
             .remove(&StorageKey::Asset(code.clone()));
     }
+
     pub fn is_allowed(env: &Env, code: &SorobanString) -> bool {
         env.storage()
             .instance()
             .has(&StorageKey::Asset(code.clone()))
     }
+
     pub fn require_allowed(env: &Env, code: &SorobanString) {
         if !is_allowed(env, code) {
             panic!("asset not allowed")
@@ -111,15 +133,14 @@ pub mod assets {
 pub mod max_deposit {
     use super::*;
 
-    pub fn set(env: &Env, amount: i128) {
-        env.storage().instance().set(&StorageKey::MaxDeposit, &amount);
+    pub fn set(env: &Env, amount: &i128) {
+        env.storage()
+            .instance()
+            .set(&StorageKey::MaxDeposit, amount);
     }
 
-pub fn get(env: &Env) -> Option<i128> {
-    let value = env.storage().instance().get(&StorageKey::MaxDeposit);
-    extend_instance_ttl(env);
-    if value.is_some() {
-        // Key-specific extension not possible for instance(), but general TTL bumped
+    pub fn get(env: &Env) -> Option<i128> {
+        env.storage().instance().get(&StorageKey::MaxDeposit)
     }
     value
 }
@@ -162,16 +183,29 @@ pub mod settlements {
             .persistent()
             .set(&StorageKey::Settlement(s.id.clone()), s);
     }
-pub fn get(env: &Env, id: &SorobanString) -> Settlement {
-    let settlement_key = StorageKey::Settlement(id.clone());
-    let settlement = env.storage()
-        .persistent()
-        .get(&settlement_key)
-        .expect("settlement not found");
-    extend_persistent_ttl(env, &settlement_key);
-    settlement
+    pub fn get(env: &Env, id: &SorobanString) -> Settlement {
+        env.storage()
+            .persistent()
+            .get(&StorageKey::Settlement(id.clone()))
+            .expect("settlement not found")
+    }
+    pub fn extend_ttl(env: &Env, id: &SorobanString) {
+        env.storage()
+            .persistent()
+            .extend_ttl(&StorageKey::Settlement(id.clone()), 535679, 535679);
+    }
 }
 
+pub mod max_deposit {
+    use super::*;
+    pub fn set(env: &Env, amount: &i128) {
+        env.storage()
+            .instance()
+            .set(&StorageKey::MaxDeposit, amount);
+    }
+    pub fn get(env: &Env) -> Option<i128> {
+        env.storage().instance().get(&StorageKey::MaxDeposit)
+    }
 }
 
 
@@ -210,4 +244,14 @@ pub fn get_count(env: &Env) -> i128 {
     extend_persistent_ttl(env, &count_key);
     count
 }
+}
+
+pub mod limits {
+    use super::*;
+    pub fn set_min(env: &Env, amount: i128) {
+        env.storage().instance().set(&StorageKey::MinDeposit, &amount);
+    }
+    pub fn get_min(env: &Env) -> i128 {
+        env.storage().instance().get(&StorageKey::MinDeposit).unwrap_or(0)
+    }
 }
