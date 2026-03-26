@@ -226,7 +226,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000001"
               },
               {
-                "symbol": "finalize_settlement"
+                "symbol": "set_max_deposit"
               }
             ],
             "data": {
@@ -235,22 +235,10 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "USD"
-                },
-                {
-                  "vec": []
-                },
-                {
                   "i128": {
                     "hi": 0,
-                    "lo": 0
+                    "lo": 500000000
                   }
-                },
-                {
-                  "u64": 2
-                },
-                {
-                  "u64": 1
                 }
               ]
             }
@@ -274,28 +262,16 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'not relayer' from contract function 'Symbol(obj#33)'"
+                  "string": "caught panic 'not admin' from contract function 'Symbol(obj#29)'"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "USD"
-                },
-                {
-                  "vec": []
-                },
-                {
                   "i128": {
                     "hi": 0,
-                    "lo": 0
+                    "lo": 500000000
                   }
-                },
-                {
-                  "u64": 2
-                },
-                {
-                  "u64": 1
                 }
               ]
             }
@@ -352,7 +328,7 @@
                   "string": "contract call failed"
                 },
                 {
-                  "symbol": "finalize_settlement"
+                  "symbol": "set_max_deposit"
                 },
                 {
                   "vec": [
@@ -360,22 +336,10 @@
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                     },
                     {
-                      "string": "USD"
-                    },
-                    {
-                      "vec": []
-                    },
-                    {
                       "i128": {
                         "hi": 0,
-                        "lo": 0
+                        "lo": 500000000
                       }
-                    },
-                    {
-                      "u64": 2
-                    },
-                    {
-                      "u64": 1
                     }
                   ]
                 }

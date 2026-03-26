@@ -80,7 +80,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "relayer-on-tx"
+                  "string": "anchor-001"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
@@ -88,7 +88,7 @@
                 {
                   "i128": {
                     "hi": 0,
-                    "lo": 1
+                    "lo": 100000000
                   }
                 },
                 {
@@ -124,7 +124,7 @@
                   "symbol": "AnchorIdx"
                 },
                 {
-                  "string": "relayer-on-tx"
+                  "string": "anchor-001"
                 }
               ]
             },
@@ -144,7 +144,7 @@
                       "symbol": "AnchorIdx"
                     },
                     {
-                      "string": "relayer-on-tx"
+                      "string": "anchor-001"
                     }
                   ]
                 },
@@ -203,7 +203,7 @@
                       "val": {
                         "i128": {
                           "hi": 0,
-                          "lo": 1
+                          "lo": 100000000
                         }
                       }
                     },
@@ -212,7 +212,7 @@
                         "symbol": "anchor_transaction_id"
                       },
                       "val": {
-                        "string": "relayer-on-tx"
+                        "string": "anchor-001"
                       }
                     },
                     {
@@ -801,7 +801,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "relayer-on-tx"
+                  "string": "anchor-001"
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
@@ -809,7 +809,7 @@
                 {
                   "i128": {
                     "hi": 0,
-                    "lo": 1
+                    "lo": 100000000
                   }
                 },
                 {
@@ -844,7 +844,7 @@
                   "string": "15ec7bf0b50732b49f8228e07d243653"
                 },
                 {
-                  "string": "relayer-on-tx"
+                  "string": "anchor-001"
                 }
               ]
             }
@@ -926,7 +926,7 @@
                   "val": {
                     "i128": {
                       "hi": 0,
-                      "lo": 1
+                      "lo": 100000000
                     }
                   }
                 },
@@ -935,7 +935,7 @@
                     "symbol": "anchor_transaction_id"
                   },
                   "val": {
-                    "string": "relayer-on-tx"
+                    "string": "anchor-001"
                   }
                 },
                 {

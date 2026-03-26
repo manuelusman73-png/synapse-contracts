@@ -152,13 +152,13 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "string": "0"
+                  "string": "15ec7bf0b50732b49f8228e07d243653"
                 }
               }
             },
             "ext": "v0"
           },
-          172800
+          4095
         ]
       ],
       [
@@ -171,7 +171,7 @@
                   "symbol": "Tx"
                 },
                 {
-                  "string": "0"
+                  "string": "15ec7bf0b50732b49f8228e07d243653"
                 }
               ]
             },
@@ -191,7 +191,7 @@
                       "symbol": "Tx"
                     },
                     {
-                      "string": "0"
+                      "string": "15ec7bf0b50732b49f8228e07d243653"
                     }
                   ]
                 },
@@ -227,6 +227,12 @@
                     },
                     {
                       "key": {
+                        "symbol": "callback_type"
+                      },
+                      "val": "void"
+                    },
+                    {
+                      "key": {
                         "symbol": "created_ledger"
                       },
                       "val": {
@@ -238,7 +244,7 @@
                         "symbol": "id"
                       },
                       "val": {
-                        "string": "0"
+                        "string": "15ec7bf0b50732b49f8228e07d243653"
                       }
                     },
                     {
@@ -248,6 +254,12 @@
                       "val": {
                         "string": "test-memo"
                       }
+                    },
+                    {
+                      "key": {
+                        "symbol": "memo_type"
+                      },
+                      "val": "void"
                     },
                     {
                       "key": {
@@ -350,18 +362,6 @@
                         },
                         "val": {
                           "bool": true
-                        }
-                      },
-                      {
-                        "key": {
-                          "vec": [
-                            {
-                              "symbol": "AssetCount"
-                            }
-                          ]
-                        },
-                        "val": {
-                          "u32": 1
                         }
                       },
                       {
@@ -656,6 +656,33 @@
       "event": {
         "ext": "v0",
         "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "synapse"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "symbol": "RelayerGranted"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000001",
         "type_": "diagnostic",
         "body": {
           "v0": {
@@ -820,7 +847,7 @@
                   "symbol": "DepositRegistered"
                 },
                 {
-                  "string": "0"
+                  "string": "15ec7bf0b50732b49f8228e07d243653"
                 },
                 {
                   "string": "memo-stored"
@@ -848,7 +875,7 @@
               }
             ],
             "data": {
-              "string": "0"
+              "string": "15ec7bf0b50732b49f8228e07d243653"
             }
           }
         }
@@ -874,7 +901,7 @@
               }
             ],
             "data": {
-              "string": "0"
+              "string": "15ec7bf0b50732b49f8228e07d243653"
             }
           }
         }
@@ -927,6 +954,12 @@
                 },
                 {
                   "key": {
+                    "symbol": "callback_type"
+                  },
+                  "val": "void"
+                },
+                {
+                  "key": {
                     "symbol": "created_ledger"
                   },
                   "val": {
@@ -938,7 +971,7 @@
                     "symbol": "id"
                   },
                   "val": {
-                    "string": "0"
+                    "string": "15ec7bf0b50732b49f8228e07d243653"
                   }
                 },
                 {
@@ -948,6 +981,12 @@
                   "val": {
                     "string": "test-memo"
                   }
+                },
+                {
+                  "key": {
+                    "symbol": "memo_type"
+                  },
+                  "val": "void"
                 },
                 {
                   "key": {
