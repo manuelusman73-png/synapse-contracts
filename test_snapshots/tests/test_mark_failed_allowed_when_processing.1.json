@@ -94,6 +94,7 @@
                 {
                   "string": "USD"
                 },
+                "void",
                 "void"
               ]
             }
@@ -1022,6 +1023,7 @@
                 {
                   "string": "USD"
                 },
+                "void",
                 "void"
               ]
             }

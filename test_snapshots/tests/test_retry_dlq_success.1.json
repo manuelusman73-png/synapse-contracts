@@ -102,7 +102,6 @@
         }
       ]
     ],
-    [],
     [
       [
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
@@ -119,7 +118,7 @@
                   "string": "374708fff7719dd5979ec875d56cd228"
                 },
                 {
-                  "string": "failed-initially"
+                  "string": "err"
                 }
               ]
             }
@@ -128,7 +127,6 @@
         }
       ]
     ],
-    [],
     [
       [
         "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
@@ -251,7 +249,7 @@
                         "symbol": "error_reason"
                       },
                       "val": {
-                        "string": "failed-initially"
+                        "string": "err"
                       }
                     },
                     {
@@ -1113,7 +1111,7 @@
                   "string": "374708fff7719dd5979ec875d56cd228"
                 },
                 {
-                  "string": "failed-initially"
+                  "string": "err"
                 }
               ]
             }
@@ -1143,7 +1141,7 @@
                   "string": "374708fff7719dd5979ec875d56cd228"
                 },
                 {
-                  "string": "failed-initially"
+                  "string": "err"
                 }
               ]
             }
