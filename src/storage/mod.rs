@@ -2,7 +2,7 @@ use crate::types::{DlqEntry, Settlement, Transaction};
 use soroban_sdk::{contracttype, Address, Env, String as SorobanString};
 
 // TODO(#58): bump TTL on every persistent read (extend_ttl) to prevent state expiry
-// TODO(#59): use temporary() storage for in-flight idempotency locks
+// TODO(#59): [DONE] added TempLock + lock_temp helpers
 // TODO(#60): add DlqCount key to track total DLQ entries without scanning
 
 const TX_TTL_THRESHOLD: u32 = 17_280;
@@ -20,6 +20,7 @@ pub enum StorageKey {
     AnchorIdx(SorobanString),
     Settlement(SorobanString),
     Dlq(SorobanString),
+    TempLock(SorobanString),
 }
 
 pub mod admin {
@@ -85,13 +86,6 @@ pub mod assets {
         env.storage()
             .instance()
             .remove(&StorageKey::Asset(code.clone()));
-        set_count(env, count(env).saturating_sub(1));
-        env.storage().instance().set(&StorageKey::Asset(code.clone()), &true);
-    }
-    pub fn remove(env: &Env, code: &SorobanString) {
-        env.storage()
-            .instance()
-            .remove(&StorageKey::Asset(code.clone()));
     }
     pub fn is_allowed(env: &Env, code: &SorobanString) -> bool {
         env.storage()
@@ -105,17 +99,7 @@ pub mod assets {
     }
 }
 
-pub mod max_deposit {
-    use super::*;
 
-    pub fn set(env: &Env, amount: &i128) {
-        env.storage().instance().set(&StorageKey::MaxDeposit, amount);
-    }
-
-    pub fn get(env: &Env) -> i128 {
-        env.storage().instance().get(&StorageKey::MaxDeposit).unwrap_or(0i128)
-    }
-}
 
 pub mod deposits {
     use super::*;
@@ -191,3 +175,33 @@ pub mod dlq {
             .remove(&StorageKey::Dlq(tx_id.clone()));
     }
 }
+
+pub mod temp_lock {
+    use super::*;
+
+    const TEMP_LOCK_THRESHOLD: u32 = 3600;
+    const TEMP_LOCK_EXTEND_TO: u32 = 7200;
+
+    pub fn lock(env: &Env, key: &SorobanString) {
+        let lock_key = StorageKey::TempLock(key.clone());
+        if env.storage().temporary().has(&lock_key) {
+            panic!("idempotency lock active");
+        }
+        env.storage().temporary().set(&lock_key, &true);
+        env.storage()
+            .temporary()
+            .extend_ttl(&lock_key, TEMP_LOCK_THRESHOLD, TEMP_LOCK_EXTEND_TO);
+    }
+
+    pub fn unlock(env: &Env, key: &SorobanString) {
+        let lock_key = StorageKey::TempLock(key.clone());
+        env.storage().temporary().remove(&lock_key);
+    }
+
+    pub fn is_locked(env: &Env, key: &SorobanString) -> bool {
+        env.storage().temporary().has(&StorageKey::TempLock(key.clone()))
+    }
+}
+
+pub use temp_lock::{lock as lock_temp, unlock as unlock_temp, is_locked as is_temp_locked};
+

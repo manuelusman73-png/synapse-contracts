@@ -1,4 +1,3 @@
-use alloc::format;
 use soroban_sdk::{contracttype, Address, Env, String as SorobanString, Vec};
 extern crate alloc;
 use alloc::format;
@@ -50,21 +49,21 @@ impl Transaction {
         memo: Option<SorobanString>,
     ) -> Self {
         let ledger = env.ledger().sequence();
-        Self {
-            id: generate_id(env, &anchor_transaction_id),
-            anchor_transaction_id,
-            stellar_account,
-            relayer,
-            amount,
-            asset_code,
-            status: TransactionStatus::Pending,
-            created_ledger: ledger,
-            updated_ledger: ledger,
-            settlement_id: SorobanString::from_str(env, ""),
-            memo,
-            memo_type: None,
-            callback_type: None,
-        }
+    Self {
+        id: generate_id(env),
+        anchor_transaction_id,
+        stellar_account,
+        relayer,
+        amount,
+        asset_code,
+        status: TransactionStatus::Pending,
+        created_ledger: ledger,
+        updated_ledger: ledger,
+        settlement_id: SorobanString::from_str(env, ""),
+        memo,
+        memo_type: None,
+        callback_type: None,
+    }
     }
 }
 
@@ -89,15 +88,15 @@ impl Settlement {
         period_start: u64,
         period_end: u64,
     ) -> Self {
-        Self {
-            id: generate_settlement_id(env),
-            asset_code,
-            tx_ids,
-            total_amount,
-            period_start,
-            period_end,
-            created_ledger: env.ledger().sequence(),
-        }
+    Self {
+        id: generate_id(env),
+        asset_code,
+        tx_ids,
+        total_amount,
+        period_start,
+        period_end,
+        created_ledger: env.ledger().sequence(),
+    }
     }
 }
 
@@ -133,6 +132,7 @@ impl DlqEntry {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Event {
     Initialized(Address),                                    // (admin)
+    RelayerGranted(Address),
     DepositRegistered(SorobanString, SorobanString),         // (tx_id, anchor_id)
     StatusUpdated(SorobanString, TransactionStatus),         // (tx_id, new_status)
     MovedToDlq(SorobanString, SorobanString),                // (tx_id, error_reason)

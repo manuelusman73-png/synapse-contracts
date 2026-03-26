@@ -128,7 +128,9 @@ impl SynapseContract {
             if amount > max { panic!("amount exceeds max deposit") }
         }
 
+        lock_temp(&env, &anchor_transaction_id);
         if let Some(existing) = deposits::find_by_anchor_id(&env, &anchor_transaction_id) {
+            unlock_temp(&env, &anchor_transaction_id);
             return existing;
         }
 
@@ -136,6 +138,7 @@ impl SynapseContract {
             &env,
             anchor_transaction_id.clone(),
             stellar_account,
+            caller.clone(),
             amount,
             asset_code,
             memo,
@@ -143,6 +146,7 @@ impl SynapseContract {
         let id = tx.id.clone();
         deposits::save(&env, &tx);
         deposits::index_anchor_id(&env, &anchor_transaction_id, &id);
+        unlock_temp(&env, &anchor_transaction_id);
         emit(
             &env,
             Event::DepositRegistered(id.clone(), anchor_transaction_id),
@@ -288,15 +292,7 @@ impl SynapseContract {
         relayers::has(&env, &address)
     }
 
-    pub fn set_max_deposit(env: Env, caller: Address, amount: i128) {
-        require_admin(&env, &caller);
-        max_deposit::set(&env, &amount);
-    }
 
-    pub fn get_max_deposit(env: Env) -> i128 {
-        max_deposit::get(&env)
-    }
-}
 
 #[cfg(test)]
 mod tests {
