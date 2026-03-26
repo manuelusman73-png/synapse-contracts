@@ -1,4 +1,6 @@
 use soroban_sdk::{contracttype, Address, Env, String as SorobanString, Vec};
+extern crate alloc;
+use alloc::format;
 
 // TODO(#45): replace generate_id with hash(anchor_transaction_id) for determinism
 // TODO(#46): add `Cancelled` status for user-initiated cancellations
@@ -128,5 +130,7 @@ pub enum Event {
 }
 
 fn generate_id(env: &Env) -> SorobanString {
-    SorobanString::from_str(env, &soroban_sdk::format!("{}-{}", env.ledger().timestamp(), env.ledger().sequence()))
+    let timestamp = env.ledger().timestamp();
+    let sequence = env.ledger().sequence();
+    SorobanString::from_str(env, &alloc::format!("{}-{}", timestamp, sequence))
 }

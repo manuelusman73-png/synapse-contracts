@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use soroban_sdk::{testutils::Address as _, Address, Env, String as SorobanString, vec};
-use crate::{SynapseContract, SynapseContractClient};
+use synapse_contract::{SynapseContract, SynapseContractClient};
 
 fn setup(env: &Env) -> (Address, SynapseContractClient) {
     env.mock_all_auths();
