@@ -1,14 +1,15 @@
-# Task: Fix DLQ Retry, Asset Cap, and Wire Guards
+# TODOs for feature/issue-61-storage-pause-check
 
-Approved plan to fix snapshot failures: full DLQ retry logic (#29,#31,#62), asset allowlist cap (#13), wire require_not_paused (#63). Branch: `feature/fix-dlq-asset-cap`.
+## Plan Steps:
+1. [x] Add pause::is_paused check to deposits::save, settlements::save, dlq::push in src/storage/mod.rs
+2. [ ] Add/update tests in src/lib.rs or snapshots for pause enforcement in storage mutators
+3. [ ] cargo test
+4. [ ] git add . &amp;&amp; git commit -m "Add pause::is_paused checks to storage mutators (#61 #65)"
+5. [ ] git push origin feature/issue-61-storage-pause-check
+6. [ ] gh pr create --title "Add pause checks to storage mutators (#61 #65)" --body "Check pause::is_paused at top of deposits::save, settlements::save, dlq::push.
 
-## Steps to Complete:
-- [ ] 1. Create/update branch: `git checkout -b feature/fix-dlq-asset-cap`
-- [ ] 2. Edit src/types/mod.rs: Add Event::DlqRetried(SorobanString), Event::MaxRetriesExceeded(SorobanString); remove related TODOs.
-- [ ] 3. Edit src/storage/mod.rs: Add asset_count storage (get/set/inc/dec); enforce MAX_ASSETS=50u32; fix assets::remove duplicate.
-- [ ] 4. Edit src/lib.rs: Implement asset cap in add_asset (panic if exceeded); full retry_dlq (max retries check, remove DLQ on success, emit events); wire require_not_paused guards; fix duplicate set_max_deposit; add missing events (e.g., RelayerGranted).
-- [ ] 5. Edit tests/contract_test.rs: Add/update tests for new logic (asset cap exceeds/respects, retry removes DLQ, max retries).
-- [ ] 6. Run `cargo test` to verify snapshots pass.
-- [ ] 7. Update this TODO.md with completions.
-- [ ] 8. Commit changes, push, create PR to develop.
+Defense in depth for storage layer.
 
+Closes #65 #61" --base develop
+
+Updated after each completed step.
