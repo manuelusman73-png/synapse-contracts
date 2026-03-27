@@ -270,6 +270,7 @@ fn finalize_settlement_panics_when_paused() {
         &100_000_000,
         &usd(&env),
         &None,
+        &None,
     );
     client.mark_processing(&relayer, &tx_id);
     client.mark_completed(&relayer, &tx_id);
