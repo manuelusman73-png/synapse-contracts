@@ -1516,4 +1516,36 @@ mod tests {
         assert_eq!(contract, contract_id);
         assert_eq!(topics, (symbol_short!("synapse"),).into_val(&env));
     }
+
+    #[test]
+    fn test_require_admin_or_relayer_passes_for_admin() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        env.as_contract(&contract_id, || {
+            crate::access::require_admin_or_relayer(&env, &admin);
+        });
+    }
+
+    #[test]
+    fn test_require_admin_or_relayer_passes_for_relayer() {
+        let env = Env::default();
+        let (admin, contract_id) = setup(&env);
+        let client = SynapseContractClient::new(&env, &contract_id);
+        let relayer = Address::generate(&env);
+        client.grant_relayer(&admin, &relayer);
+        env.as_contract(&contract_id, || {
+            crate::access::require_admin_or_relayer(&env, &relayer);
+        });
+    }
+
+    #[test]
+    #[should_panic(expected = "not admin or relayer")]
+    fn test_require_admin_or_relayer_panics_for_stranger() {
+        let env = Env::default();
+        let (_, contract_id) = setup(&env);
+        let stranger = Address::generate(&env);
+        env.as_contract(&contract_id, || {
+            crate::access::require_admin_or_relayer(&env, &stranger);
+        });
+    }
 }
