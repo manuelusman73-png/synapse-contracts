@@ -165,7 +165,6 @@ pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
 
 
     // TODO(#15): enforce minimum deposit amount (configurable by admin)
-    // TODO(#16): enforce maximum deposit amount (configurable by admin) — DONE
     // TODO(#17): validate anchor_transaction_id is non-empty
     // TODO(#18): add `memo` field support (mirrors synapse-core CallbackPayload)
     // TODO(#20): add `callback_type` field (deposit | withdrawal)
@@ -232,6 +231,9 @@ pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
         tx.status = TransactionStatus::Completed;
         tx.updated_ledger = env.ledger().sequence();
         deposits::save(&env, &tx);
+        if dlq::get(&env, &tx_id).is_some() {
+            dlq::remove(&env, &tx_id);
+        }
         emit(
             &env,
             Event::StatusUpdated(tx_id, old_status, TransactionStatus::Completed),
@@ -412,11 +414,6 @@ mod tests {
         testutils::{Address as _, Events as _, Ledger as _},
         vec, Env, IntoVal, String as SorobanString, TryFromVal,
     };
-
-    const TEST_ASSET_CODES: [&str; 20] = [
-        "A00", "A01", "A02", "A03", "A04", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12",
-        "A13", "A14", "A15", "A16", "A17", "A18", "A19",
-    ];
 
     fn setup(env: &Env) -> (Address, Address) {
         env.mock_all_auths();
