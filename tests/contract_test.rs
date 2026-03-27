@@ -568,10 +568,10 @@ fn mark_processing_on_non_pending_tx_panics() {
         &Address::generate(&env),
         &50_000_000,
         &usd(&env),
+        &None,
     );
     client.mark_processing(&relayer, &tx_id);
     client.mark_completed(&relayer, &tx_id);
-    // tx is now Completed — must panic
     client.mark_processing(&relayer, &tx_id);
 }
 
@@ -784,8 +784,8 @@ fn settle_non_completed_tx_panics() {
         &Address::generate(&env),
         &100_000_000,
         &usd(&env),
+        &None,
     );
-    // tx is Pending — must panic
     client.finalize_settlement(
         &relayer,
         &usd(&env),
@@ -795,10 +795,6 @@ fn settle_non_completed_tx_panics() {
         &1u64,
     );
 }
-
-// TODO(#33): test that settling a non-Completed tx panics — DONE
-// TODO(#34): test that settling an already-settled tx panics
-// TODO(#36): test that mismatched total_amount panics
 
 #[test]
 #[should_panic(expected = "period_start must be <= period_end")]
@@ -814,6 +810,7 @@ fn finalize_settlement_panics_when_period_start_exceeds_period_end() {
         &Address::generate(&env),
         &100_000_000,
         &usd(&env),
+        &None,
     );
     client.mark_processing(&relayer, &tx_id);
     client.mark_completed(&relayer, &tx_id);
@@ -838,9 +835,14 @@ fn finalize_settlement_succeeds_with_correct_total() {
         &Address::generate(&env), &100_000_000, &usd(&env), &None);
     client.mark_processing(&relayer, &tx_id);
     client.mark_completed(&relayer, &tx_id);
-    let s_id = client.finalize_settlement(&relayer, &usd(&env),
-        &vec![&env, tx_id], &100_000_000, &0u64, &1u64);
-    // Verify settlement can be retrieved (TTL was extended)
+    let s_id = client.finalize_settlement(
+        &relayer,
+        &usd(&env),
+        &vec![&env, tx_id],
+        &100_000_000,
+        &0u64,
+        &1u64,
+    );
     let s = client.get_settlement(&s_id);
     assert_eq!(s.total_amount, 100_000_000);
 }

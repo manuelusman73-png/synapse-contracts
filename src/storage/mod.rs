@@ -176,7 +176,7 @@ pub fn save(env: &Env, s: &Settlement) {
         }
         env.storage()
             .persistent()
-            .set(&StorageKey::Settlement(s.id.clone()), s);
+            .extend_ttl(&key, 535_679, 535_679);
     }
     pub fn get(env: &Env, id: &SorobanString) -> Settlement {
         env.storage()
