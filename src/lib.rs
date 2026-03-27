@@ -169,7 +169,6 @@ pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
     // TODO(#17): validate anchor_transaction_id is non-empty
     // TODO(#18): add `memo` field support (mirrors synapse-core CallbackPayload)
     // TODO(#20): add `callback_type` field (deposit | withdrawal)
-    // TODO(#21): bump persistent TTL on AnchorIdx entry after save
     pub fn register_deposit(
         env: Env,
         caller: Address,
