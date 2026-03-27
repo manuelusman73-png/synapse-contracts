@@ -138,6 +138,9 @@ pub mod min_deposit {
     pub fn get(env: &Env) -> Option<i128> {
         env.storage().instance().get(&StorageKey::MinDeposit)
     }
+    pub fn set(env: &Env, amount: &i128) {
+        env.storage().instance().set(&StorageKey::MaxDeposit, amount);
+    }
 }
 
 pub mod deposits {
