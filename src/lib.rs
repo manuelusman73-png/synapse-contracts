@@ -422,6 +422,10 @@ pub fn grant_relayer(env: Env, caller: Address, relayer: Address) {
         relayers::has(&env, &address)
     }
 
+    pub fn is_paused(env: Env) -> bool {
+        storage::pause::is_paused(&env)
+    }
+
 }
 
 #[cfg(test)]
