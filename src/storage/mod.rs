@@ -54,6 +54,19 @@ pub mod pending_admin {
     }
 }
 
+pub mod pending_admin {
+    use super::*;
+    pub fn set(env: &Env, addr: &Address) {
+        env.storage().instance().set(&StorageKey::PendingAdmin, addr);
+    }
+    pub fn get(env: &Env) -> Option<Address> {
+        env.storage().instance().get(&StorageKey::PendingAdmin)
+    }
+    pub fn clear(env: &Env) {
+        env.storage().instance().remove(&StorageKey::PendingAdmin);
+    }
+}
+
 pub mod pause {
     use super::*;
     pub fn set(env: &Env, paused: bool) {
@@ -137,6 +150,9 @@ pub mod min_deposit {
 
     pub fn get(env: &Env) -> Option<i128> {
         env.storage().instance().get(&StorageKey::MinDeposit)
+    }
+    pub fn set(env: &Env, amount: &i128) {
+        env.storage().instance().set(&StorageKey::MaxDeposit, amount);
     }
     pub fn set(env: &Env, amount: &i128) {
         env.storage().instance().set(&StorageKey::MaxDeposit, amount);
